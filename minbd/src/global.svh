@@ -1,8 +1,8 @@
 // Global Variable
-`ifndef _GLOBAL_SVH
-`define _GLOBAL_SVH
+`ifndef _GLOBAL_SV
+`define _GLOBAL_SV
 
-// Port Arrangement
+// Port Arragement
 // 5-BYPASS 4-LOCAL; 3-N; 2-S; 1-E; 0-W;
 
 
@@ -21,7 +21,7 @@
 `define CORD_Y           3
 `define SIDE_BUF_CNT_TH  1
 `define DEPTH_SIDE_BUF   1
-
+`define USE_REG_MACRO    1 // Use regiter macro prevents tool from adding registers as a module
 
 `define MUX2TO1(din_0, din_1, sel, dout) \
   assign dout = sel ? din_1 : din_0;

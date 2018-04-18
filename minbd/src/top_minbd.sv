@@ -27,13 +27,14 @@ local_inject_gnt
 input  clk, n_rst;
 input  flit_ext_t din_n, din_e, din_s, din_w, din_l;
 output flit_ext_t dout_n, dout_e, dout_s, dout_w, dout_l_1, dout_l_2;
-output reg local_inject_gnt;
+output logic local_inject_gnt;
 
 flit_int_t flit_in_0 [0:8];
 flit_int_t flit_in_1 [0:8];
 flit_int_t flit_in_2 [0:8];
 flit_int_t flit_in_3 [0:8];
 flit_int_t flit_in_l;
+flit_ext_t r_din_n, r_din_e, r_din_s, r_din_w, r_din_l;
 
 
 // A random number generator using 4-bit LFST
@@ -44,18 +45,23 @@ logic [2:0] rand_num, r_rand_num;
 
 lfsr lfsr_inst (clk, n_rst, rand_num);
 
-`REG_SYNC_RST(clk, n_rst, r_rand_num, rand_num)
-
 // Buffer input flits
 
-flit_ext_t r_din_n, r_din_e, r_din_s, r_din_w, r_din_l;
-
+`ifdef USE_REG_MACRO
+`REG_SYNC_RST(clk, n_rst, r_rand_num, rand_num)
 `REG_SYNC_RST(clk, n_rst, r_din_n, din_n)
 `REG_SYNC_RST(clk, n_rst, r_din_e, din_e)
 `REG_SYNC_RST(clk, n_rst, r_din_s, din_s)
 `REG_SYNC_RST(clk, n_rst, r_din_w, din_w)
 `REG_SYNC_RST(clk, n_rst, r_din_l, din_l)
-
+`else
+dff_sync_rst #(3) rand_dff (rand_num, clk, n_rst, r_rand_num);
+dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_n (din_n, clk, n_rst, r_din_n);
+dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_e (din_e, clk, n_rst, r_din_e);
+dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_s (din_s, clk, n_rst, r_din_s);
+dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_w (din_w, clk, n_rst, r_din_w);
+dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_l (din_l, clk, n_rst, r_din_l);
+`endif
 
 // Route computation
 
@@ -108,8 +114,6 @@ eject eject_st1 (
 .dout_local     (dout_local_1)
 );
 
-`REG_SYNC_RST(clk, n_rst, dout_l_1, dout_local_1[`WIDTH_FLIT_EXT-1:0])
-
 // Ejector 2
 
 flit_int_t dout_local_2;
@@ -126,8 +130,6 @@ eject eject_st2 (
 .dout_3         (flit_in_3[2]),
 .dout_local     (dout_local_2)
 );
-
-`REG_SYNC_RST(clk, n_rst, dout_l_2, dout_local_2[`WIDTH_FLIT_EXT-1:0])
 
 // Redirect to side buffer
 
@@ -190,12 +192,17 @@ inject local_inject_inst (
 
 // Pipeline Stage 1
 
-`REG_SYNC_RST(clk, n_rst, local_inject_gnt, local_inject_gnt_out)
+`ifdef USE_REG_MACRO
 `REG_SYNC_RST(clk, n_rst, flit_in_0[6], flit_in_0[5])
 `REG_SYNC_RST(clk, n_rst, flit_in_1[6], flit_in_1[5])
 `REG_SYNC_RST(clk, n_rst, flit_in_2[6], flit_in_2[5])
 `REG_SYNC_RST(clk, n_rst, flit_in_3[6], flit_in_3[5])
-
+`else
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_0 (flit_in_0[5], clk, n_rst, flit_in_0[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_1 (flit_in_1[5], clk, n_rst, flit_in_1[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_2 (flit_in_2[5], clk, n_rst, flit_in_2[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_3 (flit_in_3[5], clk, n_rst, flit_in_3[6]);
+`endif
 
 // Permuation 
 
@@ -252,10 +259,23 @@ eject_to_side_buf eject_to_side_buf_inst (
 );
 
 // output pipeline
+`ifdef USR_REG_MACRO
 `REG_SYNC_RST(clk, n_rst, dout_n, flit_in_0[8][`WIDTH_FLIT_EXT-1:0])
 `REG_SYNC_RST(clk, n_rst, dout_s, flit_in_1[8][`WIDTH_FLIT_EXT-1:0]) // this port is twisted
 `REG_SYNC_RST(clk, n_rst, dout_e, flit_in_2[8][`WIDTH_FLIT_EXT-1:0]) // this port is twisted
 `REG_SYNC_RST(clk, n_rst, dout_w, flit_in_3[8][`WIDTH_FLIT_EXT-1:0])
+`REG_SYNC_RST(clk, n_rst, dout_l_1, dout_local_1[`WIDTH_FLIT_EXT-1:0])
+`REG_SYNC_RST(clk, n_rst, dout_l_2, dout_local_2[`WIDTH_FLIT_EXT-1:0])
+`REG_SYNC_RST(clk, n_rst, local_inject_gnt, local_inject_gnt_out)
+`else
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_l_1 (dout_local_1[`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_l_1);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_l_2 (dout_local_2[`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_l_2);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_n   (flit_in_0[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_n);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_s   (flit_in_1[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_s);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_e   (flit_in_2[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_e);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_w   (flit_in_3[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_w);
+dff_sync_rst #(1) output_reg_local_inj_gnt (local_inject_gnt_out, clk, n_rst, local_inject_gnt);
+`endif
 
 endmodule
 
