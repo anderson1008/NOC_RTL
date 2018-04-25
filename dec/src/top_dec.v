@@ -19,12 +19,12 @@ wire [`WIDTH_PORT-1:0] r_dinLocal, r_dinBypass;
 wire [`WIDTH_PV-1:0] r_PVBypass, r_PVLocal;
 
 // Pipeline register: stage 1
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_west     (dinW, clk, reset, r_dinW);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_east     (dinE, clk, reset, r_dinE); 
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_south    (dinS, clk, reset, r_dinS);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_north    (dinN, clk, reset, r_dinN);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_local    (dinLocal, clk, reset, r_dinLocal);
-dff_async_reset # (`WIDTH_PV)   pipeline_reg_1_pv_local (PVLocal, clk, reset, r_PVLocal);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_west     (dinW, clk, reset, dinW[`POS_VALID], r_dinW);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_east     (dinE, clk, reset, dinE[`POS_VALID], r_dinE); 
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_south    (dinS, clk, reset, dinS[`POS_VALID], r_dinS);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_north    (dinN, clk, reset, dinN[`POS_VALID], r_dinN);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_1_local    (dinLocal, clk, reset, dinLocal[`POS_VALID], r_dinLocal);
+dff_async_reset # (`WIDTH_PV)   pipeline_reg_1_pv_local (PVLocal, clk, reset, dinLocal[`POS_VALID], r_PVLocal);
 
 
 
@@ -49,12 +49,12 @@ permutationNetwork permutationNetwork (pn_in[0], pn_in[1], pn_in[2], pn_in[3], p
 // Pipeline register: stage 2
 wire [`WIDTH_INTERNAL_PV-1:0] pn_out_reg [0:3];
 
-dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_0 (pn_out[0], clk, reset, pn_out_reg[0]);
-dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_1 (pn_out[1], clk, reset, pn_out_reg[1]);
-dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_2 (pn_out[2], clk, reset, pn_out_reg[2]);
-dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_3 (pn_out[3], clk, reset, pn_out_reg[3]);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_2_4  (dinBypass, clk, reset, r_dinBypass); // Directly connect with input port
-dff_async_reset # (`WIDTH_PV) pipeline_reg_2_5 (PVBypass, clk, reset, r_PVBypass); // Directly connect with input port
+dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_0 (pn_out[0], clk, reset, pn_out[0][`POS_VALID], pn_out_reg[0]);
+dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_1 (pn_out[1], clk, reset, pn_out[1][`POS_VALID], pn_out_reg[1]);
+dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_2 (pn_out[2], clk, reset, pn_out[2][`POS_VALID], pn_out_reg[2]);
+dff_async_reset # (`WIDTH_INTERNAL_PV) pipeline_reg_2_3 (pn_out[3], clk, reset, pn_out[3][`POS_VALID], pn_out_reg[3]);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_2_4  (dinBypass, clk, reset, dinBypass[`POS_VALID], r_dinBypass); // Directly connect with input port
+dff_async_reset # (`WIDTH_PV) pipeline_reg_2_5 (PVBypass, clk, reset, dinBypass[`POS_VALID], r_PVBypass); // Directly connect with input port
 
 
 // ----------------------------------------------------------------- //
@@ -122,13 +122,13 @@ end
 wire [`WIDTH_PORT-1:0] r_doutW, r_doutE, r_doutS, r_doutN, r_doutLocal, r_doutBypass;
 wire [`WIDTH_PV-1:0]  r_pv_bypass;
 
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_west (XbarOutW, clk, reset, r_doutW);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_south (XbarOutS, clk, reset, r_doutS);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_east (XbarOutE, clk, reset, r_doutE);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_north (XbarOutN, clk, reset, r_doutN);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_local (localOut, clk, reset, r_doutLocal);
-dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_bypass (XbarOutBypass, clk, reset, r_doutBypass);
-dff_async_reset # (`WIDTH_PV) pipeline_reg_3_bypass_ppv (pv_bypass_o, clk, reset, r_pv_bypass);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_west (XbarOutW, clk, reset, XbarOutW[`POS_VALID], r_doutW);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_south (XbarOutS, clk, reset, XbarOutS[`POS_VALID], r_doutS);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_east (XbarOutE, clk, reset, XbarOutE[`POS_VALID], r_doutE);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_north (XbarOutN, clk, reset, XbarOutN[`POS_VALID], r_doutN);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_local (localOut, clk, reset, localOut[`POS_VALID], r_doutLocal);
+dff_async_reset # (`WIDTH_PORT) pipeline_reg_3_bypass (XbarOutBypass, clk, reset, XbarOutBypass[`POS_VALID], r_doutBypass);
+dff_async_reset # (`WIDTH_PV) pipeline_reg_3_bypass_ppv (pv_bypass_o, clk, reset, XbarOutBypass[`POS_VALID], r_pv_bypass);
 
 assign doutW = r_doutW;
 assign doutE = r_doutE;

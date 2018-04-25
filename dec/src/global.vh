@@ -21,7 +21,7 @@
 `define NUM_PORT 6  // Include Pypass
 `define NUM_CHANNEL  5
 `define LOG_NUM_PORT 3 // = Celling (log2 (NUM_PORT))
-`define WIDTH_DATA 256
+`define WIDTH_DATA 128
 `define WIDTH_CTRL 32
 `define WIDTH_PORT `WIDTH_DATA+`WIDTH_CTRL
 `define WIDTH_PV 5 // width of productive vector
