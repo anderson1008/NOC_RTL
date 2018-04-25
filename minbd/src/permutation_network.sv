@@ -229,8 +229,8 @@ permuter_block permuter_block_2_1 (
 );
 
 permuter_block permuter_block_2_2 (
-.din_0        (modified_deflect_flit_1[1]), 
-.din_1        (modified_deflect_flit_1[3]),
+.din_0        (modified_deflect_flit_2[1]), 
+.din_1        (modified_deflect_flit_2[3]),
 .swap         (swap_pn_2_2),
 .dout_0       (dout_2),
 .dout_1       (dout_3)
