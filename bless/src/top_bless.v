@@ -26,11 +26,11 @@ output [`DATA_WIDTH-1:0] data_out_0, data_out_1, data_out_2, data_out_3, data_ou
 
 //buffer the input
 wire [`DATA_WIDTH-1:0] r_data [0:`NUM_PORT-1];
-dff_async_reset #(`DATA_WIDTH) in_pc_0(data_in_0, clk, n_rst, r_data[0]);
-dff_async_reset #(`DATA_WIDTH) in_pc_1(data_in_1, clk, n_rst, r_data[1]);
-dff_async_reset #(`DATA_WIDTH) in_pc_2(data_in_2, clk, n_rst, r_data[2]);
-dff_async_reset #(`DATA_WIDTH) in_pc_3(data_in_3, clk, n_rst, r_data[3]);
-dff_async_reset #(`DATA_WIDTH) in_pc_4(data_in_4, clk, n_rst, r_data[4]);
+dff_async_reset #(`DATA_WIDTH) in_pc_0(data_in_0, clk, n_rst, data_in_0[`VLD_POS], r_data[0]);
+dff_async_reset #(`DATA_WIDTH) in_pc_1(data_in_1, clk, n_rst, data_in_1[`VLD_POS], r_data[1]);
+dff_async_reset #(`DATA_WIDTH) in_pc_2(data_in_2, clk, n_rst, data_in_2[`VLD_POS], r_data[2]);
+dff_async_reset #(`DATA_WIDTH) in_pc_3(data_in_3, clk, n_rst, data_in_3[`VLD_POS], r_data[3]);
+dff_async_reset #(`DATA_WIDTH) in_pc_4(data_in_4, clk, n_rst, data_in_4[`VLD_POS], r_data[4]);
 
 // seperate the field 
 wire [`DST_WIDTH-1:0] dst [0:`NUM_PORT-1];
@@ -96,8 +96,8 @@ wire [`NUM_PORT-1:0]   r_st1_ppv  [4:0];
 genvar m;    
 generate
 	for (m=0; m<5; m=m+1) begin: ST1_BUF 
-		dff_async_reset #(`DATA_WIDTH) st1_buf_data (sorted_data[m], clk, n_rst, r_st1_data[m]);
-		dff_async_reset #(`NUM_PORT)   st1_buf_ppv  (sorted_ppv[m], clk, n_rst, r_st1_ppv[m]);
+		dff_async_reset #(`DATA_WIDTH) st1_buf_data (sorted_data[m], clk, n_rst, sorted_data[m][`VLD_POS], r_st1_data[m]);
+		dff_async_reset #(`NUM_PORT)   st1_buf_ppv  (sorted_ppv[m], clk, n_rst, sorted_data[m][`VLD_POS], r_st1_ppv[m]);
 	end
 endgenerate 
 
@@ -135,11 +135,11 @@ xbar xbar(
 .out_4          (xbar_out[4])
 );
 
-dff_async_reset #(`DATA_WIDTH) st2_buf_data_0 (xbar_out[0], clk, n_rst, data_out_0);
-dff_async_reset #(`DATA_WIDTH) st2_buf_data_1 (xbar_out[1], clk, n_rst, data_out_1);
-dff_async_reset #(`DATA_WIDTH) st2_buf_data_2 (xbar_out[2], clk, n_rst, data_out_2);
-dff_async_reset #(`DATA_WIDTH) st2_buf_data_3 (xbar_out[3], clk, n_rst, data_out_3);
-dff_async_reset #(`DATA_WIDTH) st2_buf_data_4 (xbar_out[4], clk, n_rst, data_out_4);
+dff_async_reset #(`DATA_WIDTH) st2_buf_data_0 (xbar_out[0], clk, n_rst, xbar_out[0][`VLD_POS], data_out_0);
+dff_async_reset #(`DATA_WIDTH) st2_buf_data_1 (xbar_out[1], clk, n_rst, xbar_out[1][`VLD_POS], data_out_1);
+dff_async_reset #(`DATA_WIDTH) st2_buf_data_2 (xbar_out[2], clk, n_rst, xbar_out[2][`VLD_POS], data_out_2);
+dff_async_reset #(`DATA_WIDTH) st2_buf_data_3 (xbar_out[3], clk, n_rst, xbar_out[3][`VLD_POS], data_out_3);
+dff_async_reset #(`DATA_WIDTH) st2_buf_data_4 (xbar_out[4], clk, n_rst, xbar_out[4][`VLD_POS], data_out_4);
 
 endmodule
 
