@@ -21,7 +21,7 @@
 `define CORD_Y           3
 `define SIDE_BUF_CNT_TH  1
 `define DEPTH_SIDE_BUF   1
-`define USE_REG_MACRO    1 // Using regiter macro prevents tool from adding registers as a module
+//`define USE_REG_MACRO    1 // Using regiter macro prevents tool from adding registers as a module
 
 `define MUX2TO1(din_0, din_1, sel, dout) \
   assign dout = sel ? din_1 : din_0;
