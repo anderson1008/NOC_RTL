@@ -54,7 +54,7 @@ remove_one_flit  remove_one_flit_inst(
 .removed_flit    (removed_flit)
 );
 
-assign dout_side_buf = deflect_to_side_buf_vld ? removed_flit : '0;
+assign dout_side_buf = deflect_to_side_buf_vld ? {1'b0, removed_flit[`WIDTH_FLIT_INT-2:0]} : '0;
 
 endmodule
 `endif
