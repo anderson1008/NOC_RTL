@@ -29,10 +29,10 @@ input  flit_ext_t din_n, din_e, din_s, din_w, din_l;
 output flit_ext_t dout_n, dout_e, dout_s, dout_w, dout_l_1, dout_l_2;
 output logic local_inject_gnt;
 
-flit_int_t flit_in_0 [0:8];
-flit_int_t flit_in_1 [0:8];
-flit_int_t flit_in_2 [0:8];
-flit_int_t flit_in_3 [0:8];
+flit_int_t flit_in_0 [0:9];
+flit_int_t flit_in_1 [0:9];
+flit_int_t flit_in_2 [0:9];
+flit_int_t flit_in_3 [0:9];
 flit_int_t flit_in_l;
 flit_ext_t r_din_n, r_din_e, r_din_s, r_din_w, r_din_l;
 
@@ -63,15 +63,32 @@ dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_w (din_w, clk, n_rst, din_w.vld, r_d
 dff_sync_rst #(`WIDTH_FLIT_EXT) input_reg_1_l (din_l, clk, n_rst, din_l.vld, r_din_l);
 `endif
 
+reg din_n_en, din_e_en, din_s_en, din_w_en, din_l_en;
+always @ (posedge clk) begin
+  din_n_en <= din_n.vld;
+  din_e_en <= din_e.vld;
+	din_s_en <= din_s.vld;
+	din_w_en <= din_w.vld;
+	din_l_en <= din_l.vld;
+end
+
+flit_ext_t w_din_n, w_din_e, w_din_s, w_din_w, w_din_l;
+mux2to1 #(`WIDTH_FLIT_EXT) mux_din_n ({`WIDTH_FLIT_EXT{1'b0}}, r_din_n, din_n_en, w_din_n);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_din_e ({`WIDTH_FLIT_EXT{1'b0}}, r_din_e, din_e_en, w_din_e);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_din_s ({`WIDTH_FLIT_EXT{1'b0}}, r_din_s, din_s_en, w_din_s);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_din_w ({`WIDTH_FLIT_EXT{1'b0}}, r_din_w, din_w_en, w_din_w);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_din_l ({`WIDTH_FLIT_EXT{1'b0}}, r_din_l, din_l_en, w_din_l);
+ 
+ 
 // Route computation
 
 wire [`NUM_DIR-1:0] ppv [0:4];
 
-rc #(`CORD_X, `CORD_Y) rc_n (r_din_n.dst_x, r_din_n.dst_y, ppv[0]);
-rc #(`CORD_X, `CORD_Y) rc_e (r_din_e.dst_x, r_din_e.dst_y, ppv[1]);
-rc #(`CORD_X, `CORD_Y) rc_s (r_din_s.dst_x, r_din_s.dst_y, ppv[2]);
-rc #(`CORD_X, `CORD_Y) rc_w (r_din_w.dst_x, r_din_w.dst_y, ppv[3]);
-rc #(`CORD_X, `CORD_Y) rc_l (r_din_l.dst_x, r_din_l.dst_y, ppv[4]);
+rc #(`CORD_X, `CORD_Y) rc_n (w_din_n.dst_x, w_din_n.dst_y, ppv[0]);
+rc #(`CORD_X, `CORD_Y) rc_e (w_din_e.dst_x, w_din_e.dst_y, ppv[1]);
+rc #(`CORD_X, `CORD_Y) rc_s (w_din_s.dst_x, w_din_s.dst_y, ppv[2]);
+rc #(`CORD_X, `CORD_Y) rc_w (w_din_w.dst_x, w_din_w.dst_y, ppv[3]);
+rc #(`CORD_X, `CORD_Y) rc_l (w_din_l.dst_x, w_din_l.dst_y, ppv[4]);
 
 // Assign sliver flit 
 //   MinBD paper assigns sliver flit in second stage. 
@@ -82,19 +99,19 @@ rc #(`CORD_X, `CORD_Y) rc_l (r_din_l.dst_x, r_din_l.dst_y, ppv[4]);
 wire [`NUM_DIR-2:0] silver_vec;
 
 pick_1out4_rand find_silver (
-.data_in  ({r_din_w.vld && ~r_din_w.golden, r_din_s.vld && ~r_din_s.golden, r_din_e.vld && ~r_din_e.golden, r_din_n.vld && ~r_din_n.golden}),
-.rand_num (r_rand_num-1'b1),
+.data_in  ({w_din_w.vld && ~w_din_w.golden, w_din_s.vld && ~w_din_s.golden, w_din_e.vld && ~w_din_e.golden, w_din_n.vld && ~w_din_n.golden}),
+.rand_num (r_rand_num[1:0]),
 .data_out (silver_vec)
 );
 
 
 // Form internal flit
 
-assign flit_in_0 [0] = {1'b0, ppv[0], silver_vec[0], r_din_n};
-assign flit_in_1 [0] = {1'b0, ppv[1], silver_vec[1], r_din_e};
-assign flit_in_2 [0] = {1'b0, ppv[2], silver_vec[2], r_din_s};
-assign flit_in_3 [0] = {1'b0, ppv[3], silver_vec[3], r_din_w};
-assign flit_in_l = {1'b0, ppv[4], 1'b0, r_din_l};
+assign flit_in_0 [0] = {1'b0, ppv[0], silver_vec[0], w_din_n};
+assign flit_in_1 [0] = {1'b0, ppv[1], silver_vec[1], w_din_e};
+assign flit_in_2 [0] = {1'b0, ppv[2], silver_vec[2], w_din_s};
+assign flit_in_3 [0] = {1'b0, ppv[3], silver_vec[3], w_din_w};
+assign flit_in_l = {1'b0, ppv[4], 1'b0, w_din_l};
 
 
 // Ejector 1
@@ -198,24 +215,39 @@ inject local_inject_inst (
 `REG_SYNC_RST(clk, n_rst, flit_in_2[6], flit_in_2[5])
 `REG_SYNC_RST(clk, n_rst, flit_in_3[6], flit_in_3[5])
 `else
-dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_0 (flit_in_0[5], clk, n_rst, flit_in_0[5].vld, flit_in_0[6]);
-dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_1 (flit_in_1[5], clk, n_rst, flit_in_1[5].vld, flit_in_1[6]);
-dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_2 (flit_in_2[5], clk, n_rst, flit_in_2[5].vld, flit_in_2[6]);
-dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_1_3 (flit_in_3[5], clk, n_rst, flit_in_3[5].vld, flit_in_3[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_st1_0 (flit_in_0[5], clk, n_rst, flit_in_0[5].vld, flit_in_0[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_st1_1 (flit_in_1[5], clk, n_rst, flit_in_1[5].vld, flit_in_1[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_st1_2 (flit_in_2[5], clk, n_rst, flit_in_2[5].vld, flit_in_2[6]);
+dff_sync_rst #(`WIDTH_FLIT_INT) pipeline_reg_st1_3 (flit_in_3[5], clk, n_rst, flit_in_3[5].vld, flit_in_3[6]);
 `endif
+
+// Propogate the valid bit to the next pipeline stage
+reg  [3:0] r_st1_en;
+always @ (posedge clk) begin
+  r_st1_en [0] <= flit_in_0[5].vld;
+  r_st1_en [1] <= flit_in_1[5].vld;
+  r_st1_en [2] <= flit_in_2[5].vld;
+  r_st1_en [3] <= flit_in_3[5].vld;
+end
+
+// Select the data propogated to the next pipeline stage
+mux2to1 #(`WIDTH_FLIT_INT) mux_st1_sel_0 ({`WIDTH_FLIT_INT{1'b0}}, flit_in_0[6], r_st1_en[0], flit_in_0[7]);
+mux2to1 #(`WIDTH_FLIT_INT) mux_st1_sel_1 ({`WIDTH_FLIT_INT{1'b0}}, flit_in_1[6], r_st1_en[1], flit_in_1[7]);
+mux2to1 #(`WIDTH_FLIT_INT) mux_st1_sel_2 ({`WIDTH_FLIT_INT{1'b0}}, flit_in_2[6], r_st1_en[2], flit_in_2[7]);
+mux2to1 #(`WIDTH_FLIT_INT) mux_st1_sel_3 ({`WIDTH_FLIT_INT{1'b0}}, flit_in_3[6], r_st1_en[3], flit_in_3[7]);
 
 // Permuation 
 
 permutation_network permutation_network (
 .rand_num        (r_rand_num-1'b1),
-.din_0           (flit_in_0[6]),
-.din_1           (flit_in_1[6]),
-.din_2           (flit_in_2[6]),
-.din_3           (flit_in_3[6]),
-.dout_0          (flit_in_0[7]),
-.dout_1          (flit_in_1[7]),
-.dout_2          (flit_in_2[7]),
-.dout_3          (flit_in_3[7])
+.din_0           (flit_in_0[7]),
+.din_1           (flit_in_1[7]),
+.din_2           (flit_in_2[7]),
+.din_3           (flit_in_3[7]),
+.dout_0          (flit_in_0[8]),
+.dout_1          (flit_in_1[8]),
+.dout_2          (flit_in_2[8]),
+.dout_3          (flit_in_3[8])
 );
 
 // Side buffer store
@@ -246,36 +278,54 @@ eject_to_side_buf eject_to_side_buf_inst (
 .rand_num        (r_rand_num-1'b1),
 .full            (full),
 .redirect_gnt    (redirect_gnt),
-.din_0           (flit_in_0[7]),
-.din_1           (flit_in_1[7]),
-.din_2           (flit_in_2[7]),
-.din_3           (flit_in_3[7]),
-.dout_0          (flit_in_0[8]),
-.dout_1          (flit_in_1[8]),
-.dout_2          (flit_in_2[8]),
-.dout_3          (flit_in_3[8]),
+.din_0           (flit_in_0[8]),
+.din_1           (flit_in_1[8]),
+.din_2           (flit_in_2[8]),
+.din_3           (flit_in_3[8]),
+.dout_0          (flit_in_0[9]),
+.dout_1          (flit_in_1[9]),
+.dout_2          (flit_in_2[9]),
+.dout_3          (flit_in_3[9]),
 .dout_side_buf   (eject_to_side_buf),
 .deflect_to_side_buf_vld (deflect_to_side_buf_vld)
 );
 
 // output pipeline
+flit_ext_t w_dout_n, w_dout_e, w_dout_s, w_dout_w, w_dout_local_1, w_dout_local_2;
 `ifdef USR_REG_MACRO
-`REG_SYNC_RST(clk, n_rst, dout_n, flit_in_0[8][`WIDTH_FLIT_EXT-1:0])
-`REG_SYNC_RST(clk, n_rst, dout_s, flit_in_1[8][`WIDTH_FLIT_EXT-1:0]) // this port is twisted
-`REG_SYNC_RST(clk, n_rst, dout_e, flit_in_2[8][`WIDTH_FLIT_EXT-1:0]) // this port is twisted
-`REG_SYNC_RST(clk, n_rst, dout_w, flit_in_3[8][`WIDTH_FLIT_EXT-1:0])
+`REG_SYNC_RST(clk, n_rst, dout_n, flit_in_0[9][`WIDTH_FLIT_EXT-1:0])
+`REG_SYNC_RST(clk, n_rst, dout_s, flit_in_1[9][`WIDTH_FLIT_EXT-1:0]) // this port is twisted
+`REG_SYNC_RST(clk, n_rst, dout_e, flit_in_2[9][`WIDTH_FLIT_EXT-1:0]) // this port is twisted
+`REG_SYNC_RST(clk, n_rst, dout_w, flit_in_3[9][`WIDTH_FLIT_EXT-1:0])
 `REG_SYNC_RST(clk, n_rst, dout_l_1, dout_local_1[`WIDTH_FLIT_EXT-1:0])
 `REG_SYNC_RST(clk, n_rst, dout_l_2, dout_local_2[`WIDTH_FLIT_EXT-1:0])
 `REG_SYNC_RST(clk, n_rst, local_inject_gnt, local_inject_gnt_out)
 `else
-dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_l_1 (dout_local_1[`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_local_1.vld, dout_l_1);
-dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_l_2 (dout_local_2[`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_local_2.vld, dout_l_2);
-dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_n   (flit_in_0[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_0[8].vld, dout_n);
-dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_s   (flit_in_1[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_1[8].vld, dout_s);
-dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_e   (flit_in_2[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_2[8].vld, dout_e);
-dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_w   (flit_in_3[8][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_3[8].vld, dout_w);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_l_1 (dout_local_1[`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_local_1.vld, w_dout_local_1);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_l_2 (dout_local_2[`WIDTH_FLIT_EXT-1:0], clk, n_rst, dout_local_2.vld, w_dout_local_2);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_n   (flit_in_0[9][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_0[9].vld, w_dout_n);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_s   (flit_in_1[9][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_1[9].vld, w_dout_s);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_e   (flit_in_2[9][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_2[9].vld, w_dout_e);
+dff_sync_rst #(`WIDTH_FLIT_EXT) output_reg_w   (flit_in_3[9][`WIDTH_FLIT_EXT-1:0], clk, n_rst, flit_in_3[9].vld, w_dout_w);
 dff_sync_rst #(1) output_reg_local_inj_gnt (local_inject_gnt_out, clk, n_rst, 1'b1, local_inject_gnt);
 `endif
+
+reg  dout_n_en, dout_e_en, dout_s_en, dout_w_en, dout_local_1_en, dout_local_2_en;
+always @ (posedge clk) begin
+  dout_n_en <= flit_in_0[9].vld;
+  dout_s_en <= flit_in_1[9].vld;
+  dout_e_en <= flit_in_2[9].vld;
+  dout_w_en <= flit_in_3[9].vld;
+	dout_local_1_en <= dout_local_1.vld;
+	dout_local_2_en <= dout_local_2.vld;
+end
+
+mux2to1 #(`WIDTH_FLIT_EXT) mux_out_sel_n ({`WIDTH_FLIT_EXT{1'b0}}, w_dout_n, dout_n_en, dout_n);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_out_sel_s ({`WIDTH_FLIT_EXT{1'b0}}, w_dout_s, dout_s_en, dout_s);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_out_sel_e ({`WIDTH_FLIT_EXT{1'b0}}, w_dout_e, dout_e_en, dout_e);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_out_sel_w ({`WIDTH_FLIT_EXT{1'b0}}, w_dout_w, dout_w_en, dout_w);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_out_sel_local_1 ({`WIDTH_FLIT_EXT{1'b0}}, w_dout_local_1, dout_local_1_en, dout_l_1);
+mux2to1 #(`WIDTH_FLIT_EXT) mux_out_sel_local_2 ({`WIDTH_FLIT_EXT{1'b0}}, w_dout_local_2, dout_local_2_en, dout_l_2);
 
 endmodule
 
