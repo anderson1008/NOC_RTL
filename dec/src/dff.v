@@ -20,7 +20,7 @@ if (~reset) begin
   q <= 1'b0;
 end  else begin
   if (en) q <= data;
-  else q <= 'h0;
+  else q <= q;
 end
 
 endmodule //End Of Module dff_async_reset
