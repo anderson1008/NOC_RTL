@@ -15,7 +15,7 @@ input clk, reset, en;
 output reg [WIDTH-1:0] q;
 
 //-------------Code Starts Here---------
-always @ ( posedge clk or negedge reset)
+always @ ( posedge clk )
 if (~reset) begin
   q <= 1'b0;
 end  else begin
